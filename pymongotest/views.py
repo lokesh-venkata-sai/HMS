@@ -1,6 +1,10 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.http import JsonResponse
 from .models import person_collection
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
 import json
 
 
@@ -25,5 +29,4 @@ def get_persons(request):
     for p in persons:
         persons_list.append(p)
 
-    print(persons_list)
     return HttpResponse(json.dumps(persons_list))
