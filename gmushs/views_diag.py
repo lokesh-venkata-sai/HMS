@@ -35,8 +35,8 @@ def add_diagnostic(request):
     d_id = max(get_diagnostic_ids()) + 1
 
     diagnostic["d_id"] = d_id
-    diagnostics_collection.insert_one(diagnostic)
-    return HttpResponse(get_response(True))
+    result = diagnostics_collection.insert_one(diagnostic)
+    return send_response(result.acknowledged)
 
 
 @api_view(['PUT'])
@@ -51,7 +51,31 @@ def update_diagnostic(request):
     result = diagnostics_collection.update_one({"d_id": d_id}, {"$set": diagnostic_data})
 
     # Check if the update was successful
-    if result.modified_count == 1:
-        return HttpResponse(get_response(True))
+    return send_response(result.modified_count == 1)
+
+
+@api_view(['POST', 'PUT'])
+def issue_diagnostic(request):
+    diagnostic_data = request.data
+    result = diagnostics_ordered_temp_collection.insert_one(diagnostic_data)
+    return send_response(result.acknowledged)
+
+
+@api_view(['GET', 'POST'])
+def get_issued_diagnostics_temp(request, p_id):
+    diagnostics = diagnostics_ordered_temp_collection.find({"p_id": p_id}, {"_id": 0})
+    diagnostics_list = []
+    for d in diagnostics:
+        diagnostics_list.append(d)
+    return HttpResponse(json.dumps(diagnostics_list))
+
+
+@api_view(['DELETE'])
+def delete_issued_diagnostic(request):
+    diagnostic_data = request.data
+    if request.method == 'DELETE':
+        result = diagnostics_ordered_temp_collection.delete_one(diagnostic_data)
+        return send_response(result.deleted_count == 1)
     else:
-        return HttpResponse(get_response(False), status=500)
+        return HttpResponse(get_response("Bad Request"))
+

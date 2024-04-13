@@ -36,8 +36,8 @@ def add_medicine(request):
     med_id = max(get_medicine_ids()) + 1
 
     medicine["med_id"] = med_id
-    medicine_collection.insert_one(medicine)
-    return HttpResponse(get_response(True))
+    result = medicine_collection.insert_one(medicine)
+    return send_response(result.acknowledged)
 
 
 @api_view(['PUT'])
@@ -56,3 +56,39 @@ def update_medicine(request):
         return HttpResponse(get_response(True))
     else:
         return HttpResponse(get_response(False), status=500)
+
+
+@api_view(['POST', 'PUT'])
+def issue_medicine(request):
+    medicine_data = request.data
+    quantity = medicine_collection.find_one({"med_id": medicine_data['med_id']})
+    if not medicine_data['quantity'] <= quantity["quantity"]:
+        return HttpResponse(get_response("No Stock: Change the quantity"))
+    result = medicines_issued_temp_collection.insert_one(medicine_data)
+    if result.acknowledged:
+        medicine_collection.update_one({"med_id": medicine_data['med_id']},
+                                       {"$set": {"quantity": quantity["quantity"] - medicine_data['quantity']}})
+    return send_response(result.acknowledged)
+
+
+@api_view(['GET', 'POST'])
+def get_issued_medicines_temp(request, p_id):
+    medicines = medicines_issued_temp_collection.find({"p_id": p_id}, {"_id": 0})
+    medicines_list = []
+    for m in medicines:
+        medicines_list.append(m)
+    return HttpResponse(json.dumps(medicines_list))
+
+
+@api_view(['DELETE'])
+def delete_issued_medicine(request):
+    medicine_data = request.data
+    if request.method == 'DELETE':
+        result = medicines_issued_temp_collection.delete_one(medicine_data)
+        if result.deleted_count == 1:
+            quantity = medicine_collection.find_one({"med_id": medicine_data['med_id']})
+            medicine_collection.update_one({"med_id": medicine_data['med_id']},
+                                           {"$set": {"quantity": quantity["quantity"] + medicine_data['quantity']}})
+        return send_response(result.deleted_count == 1)
+    else:
+        return HttpResponse(get_response("Bad Request"))

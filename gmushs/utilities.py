@@ -2,6 +2,7 @@ import json
 import random
 import string
 from .models import *
+from django.http import HttpResponse
 
 
 def generate_random_id(length):
@@ -39,3 +40,10 @@ def get_diagnostic_ids():
 
 def get_response(out):
     return json.dumps({"status": out})
+
+
+def send_response(result):
+    if result:
+        return HttpResponse(get_response(True))
+    else:
+        return HttpResponse(get_response(False), status=500)

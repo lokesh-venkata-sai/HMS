@@ -99,3 +99,30 @@ def get_rooms(request):
         rooms_list.append(r)
 
     return HttpResponse(json.dumps(rooms_list))
+
+
+@api_view(['POST'])
+def add_room(request):
+    rooms = request.data
+    result = room_type_collection.insert_one(rooms)
+    return send_response(result.acknowledged)
+
+
+@api_view(['PUT'])
+def update_room(request):
+    room_data = request.data
+    print(room_data)
+    # Update doctor data in the database
+    result = room_type_collection.update_one({"type": room_data["type"]}, {"$set": room_data})
+
+    # Check if the update was successful
+    return send_response(result.modified_count == 1)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def delete_room(request, room_type):
+    if request.method == 'DELETE':
+        result = room_type_collection.delete_one({"type": room_type})
+        return send_response(result.deleted_count == 1)
+    else:
+        return HttpResponse(get_response("Bad Request"))

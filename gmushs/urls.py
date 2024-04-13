@@ -20,10 +20,21 @@ urlpatterns = [
     path('get_medicines', views_med.get_medicines),
     path('delete_medicine/<int:med_id>', views_med.delete_medicines),
 
+    path('issue_medicine', views_med.issue_medicine),
+    path('get_issued_medicine_temp/<str:p_id>', views_med.get_issued_medicines_temp),
+    path('delete_issued_medicine', views_med.delete_issued_medicine),
+
     path('add_diagnostic', views_diag.add_diagnostic),
     path('update_diagnostic', views_diag.update_diagnostic),
     path('get_diagnostics', views_diag.get_diagnostics),
     path('delete_diagnostic/<int:d_id>', views_diag.delete_diagnostics),
 
-    path('get_room_type', views.get_rooms)
+    path('issue_diagnostic', views_diag.issue_diagnostic),
+    path('get_issued_diagnostic_temp/<str:p_id>', views_diag.get_issued_diagnostics_temp),
+    path('delete_issued_diagnostic', views_diag.delete_issued_diagnostic),
+
+    path('get_room_type', views.get_rooms),
+    path('add_room_type', views.add_room),
+    path('update_room_type', views.update_room),
+    path('delete_room/<str:room_type>', views.delete_room)
 ]
