@@ -23,5 +23,19 @@ def get_doctor_ids():
     return doctors
 
 
+def get_medicine_ids():
+    medicines = []
+    for med in medicine_collection.find({}, {"_id": 0, "med_id": 1}):
+        medicines.append(med["med_id"])
+    return medicines
+
+
+def get_diagnostic_ids():
+    diagnostics = []
+    for d in diagnostics_collection.find({}, {"_id": 0, "d_id": 1}):
+        diagnostics.append(d["d_id"])
+    return diagnostics
+
+
 def get_response(out):
     return json.dumps({"status": out})

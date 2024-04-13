@@ -42,11 +42,6 @@ def update_patient(request):
 
     # Extract patient ID
     patient_id = patient_data.get("p_id")
-    # if not patient_id:
-    #     return HttpResponse("Patient ID is required for updating.", status=400)
-
-    # Remove patient ID from the data
-    # del patient_data["p_id"]
 
     # Update doctor assigned status if needed
     doctor_id = patient_data.get("doc_id")
