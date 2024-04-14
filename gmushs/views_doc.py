@@ -21,8 +21,17 @@ def delete_doctors(request, doc_id):
     if request.method == 'DELETE':
         result = doctors_collection.delete_one({"doc_id": doc_id})
         if result.deleted_count == 1:
-            patient_doctor_collection.delete_one({"doc_id": doc_id})
-            # todo: get list of patients under doc_id and updated their doctor_assigned status in patients collection
+            patients = patient_doctor_collection.find({'doc_id': doc_id}, {"_id": 0, "p_id": 1})
+
+            p_list = []
+            for p in patients:
+                p_list.append(p["p_id"])
+
+            patient_doctor_collection.delete_many({"doc_id": doc_id})
+
+            for p in p_list:
+                patient_collection.update_one({"p_id": p}, {"$set": {"doctor_assigned": False}})
+
             return HttpResponse(get_response(True))
         else:
             return HttpResponse(get_response(False))

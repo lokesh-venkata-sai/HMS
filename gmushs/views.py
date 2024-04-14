@@ -45,13 +45,19 @@ def update_patient(request):
 
     # Update doctor assigned status if needed
     doctor_id = patient_data.get("doc_id")
+    doctor_assigned = patient_collection.find_one({"p_id": patient_id},
+                                                  {"_id": 0, "doctor_assigned": 1})["doctor_assigned"]
     del patient_data["doc_id"]
     if doctor_id == 'None':
         patient_data["doctor_assigned"] = False
         patient_doctor_collection.delete_one({"p_id": patient_id})
     else:
-        patient_data["doctor_assigned"] = True
-        patient_doctor_collection.update_one({"p_id": patient_id}, {"$set": {"doc_id": doctor_id}})
+        # print("In updating doctor ID")
+        if doctor_assigned:
+            patient_doctor_collection.update_one({"p_id": patient_id}, {"$set": {"doc_id": doctor_id}})
+        else:
+            patient_data["doctor_assigned"] = True
+            patient_doctor_collection.insert_one({"p_id": patient_id, "doc_id": doctor_id})
 
     # Update patient data in the database
     result = patient_collection.update_one({"p_id": patient_id}, {"$set": patient_data})
@@ -111,7 +117,6 @@ def add_room(request):
 @api_view(['PUT'])
 def update_room(request):
     room_data = request.data
-    print(room_data)
     # Update doctor data in the database
     result = room_type_collection.update_one({"type": room_data["type"]}, {"$set": room_data})
 

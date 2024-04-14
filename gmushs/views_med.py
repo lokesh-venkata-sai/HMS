@@ -52,10 +52,7 @@ def update_medicine(request):
     result = medicine_collection.update_one({"med_id": med_id}, {"$set": medicine_data})
 
     # Check if the update was successful
-    if result.modified_count == 1:
-        return HttpResponse(get_response(True))
-    else:
-        return HttpResponse(get_response(False), status=500)
+    return send_response(result.modified_count == 1)
 
 
 @api_view(['POST', 'PUT'])

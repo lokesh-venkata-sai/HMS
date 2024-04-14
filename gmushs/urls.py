@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views, views_doc, views_med, views_diag
+from . import views, views_doc, views_med, views_diag, views_billing
 
 # URL Configuration
 urlpatterns = [
@@ -36,5 +36,9 @@ urlpatterns = [
     path('get_room_type', views.get_rooms),
     path('add_room_type', views.add_room),
     path('update_room_type', views.update_room),
-    path('delete_room/<str:room_type>', views.delete_room)
+    path('delete_room/<str:room_type>', views.delete_room),
+
+    path('calculate_bill/<str:p_id>', views_billing.calculate_bill),
+    path('get_bill/<str:p_id>', views_billing.get_bill),
+    path('make_payment/<str:p_id>', views_billing.make_payment)
 ]
