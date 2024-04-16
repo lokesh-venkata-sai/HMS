@@ -162,3 +162,16 @@ def get_all_patient_details(request, p_id):
         "doctor_info": doctor_info
     }
     return HttpResponse(json.dumps(result))
+
+
+@api_view(['GET'])
+def get_patients_by_doctor(request, doc_id):
+    patients = patient_doctor_collection.find({'doc_id': doc_id}, {"_id": 0, "p_id": 1})
+    doctor = doctors_collection.find_one({"doc_id": doc_id}, {"_id": 0})
+
+    p_list = []
+    for p in patients:
+        p_list.append(patient_collection.find_one({"p_id": p["p_id"]}, {"_id": 0}))
+
+    res = {"doctor_info": doctor, "patient_info": p_list}
+    return HttpResponse(json.dumps(res))

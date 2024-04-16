@@ -11,11 +11,14 @@ urlpatterns = [
     path('delete_patient/<str:p_id>', views.delete_patients),
 
     path('get_all_patient_details/<str:p_id>', views.get_all_patient_details),
+    path('get_patients_by_doctor/<str:doc_id>', views.get_patients_by_doctor),
 
     path('add_doctor', views_doc.add_doctor),
     path('update_doctor', views_doc.update_doctor),
     path('get_doctors', views_doc.get_doctors),
     path('delete_doctor/<str:doc_id>', views_doc.delete_doctors),
+
+    path('get_doctor_by_patient/<str:p_id>', views_doc.get_doctor_by_patient),
 
     path('add_medicine', views_med.add_medicine),
     path('update_medicine', views_med.update_medicine),

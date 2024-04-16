@@ -69,3 +69,18 @@ def update_doctor(request):
         return HttpResponse(get_response(True))
     else:
         return HttpResponse(get_response(False), status=500)
+
+
+@api_view(['GET'])
+def get_doctor_by_patient(request, p_id):
+    patient = patient_collection.find_one({"p_id": p_id}, {"_id": 0})
+    doctor_map = patient_doctor_collection.find_one({"p_id": p_id}, {"_id": 0})
+
+    if doctor_map:
+        patient["doc_id"] = doctor_map["doc_id"]
+    else:
+        patient["doc_id"] = "None"
+
+    doctor = doctors_collection.find_one({"doc_id": patient["doc_id"]}, {"_id": 0})
+    res = {"patient_info": patient, "doctor_info": doctor}
+    return HttpResponse(json.dumps(res))
