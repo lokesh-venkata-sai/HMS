@@ -131,3 +131,34 @@ def delete_room(request, room_type):
         return send_response(result.deleted_count == 1)
     else:
         return HttpResponse(get_response("Bad Request"))
+
+
+@api_view(['GET'])
+def get_all_patient_details(request, p_id):
+    patient_data = patient_collection.find_one({"p_id": p_id}, {"_id": 0})
+    diagnostics_data = diagnostics_ordered_temp_collection.find({"p_id": p_id}, {"_id": 0})
+    medicines_data = medicines_issued_temp_collection.find({"p_id": p_id}, {"_id": 0})
+    doc_id = patient_doctor_collection.find_one({"p_id": p_id}, {"_id": 0, 'doc_id': 1})["doc_id"]
+    doctor_info = doctors_collection.find_one({"doc_id": doc_id}, {"_id": 0})
+
+    diagnostics_list = []
+    for d in diagnostics_data:
+        diagnostic = diagnostics_collection.find_one({"d_id": d["d_id"]}, {"_id": 0})
+        diagnostics_list.append({"d_id": d["d_id"],
+                                 "d_name": diagnostic["d_name"],
+                                 "date_issued": d["date_issued"]})
+    medicines_list = []
+    for m in medicines_data:
+        medicine = medicine_collection.find_one({"med_id": m["med_id"]}, {"_id": 0})
+        medicines_list.append({"med_id": m["med_id"],
+                               "m_name": medicine["med_name"],
+                               "quantity": m["quantity"],
+                               "date_issued": m["date_issued"]})
+
+    result = {
+        "patient_info": patient_data,
+        "diagnostics_info": diagnostics_list,
+        "medicines_info": medicines_list,
+        "doctor_info": doctor_info
+    }
+    return HttpResponse(json.dumps(result))
