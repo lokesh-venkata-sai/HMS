@@ -57,7 +57,9 @@ def update_diagnostic(request):
 @api_view(['POST', 'PUT'])
 def issue_diagnostic(request):
     diagnostic_data = request.data
-    result = diagnostics_ordered_temp_collection.insert_one(diagnostic_data)
+    result = True
+    for d in diagnostic_data:
+        result = result and diagnostics_ordered_temp_collection.insert_one(d)
     return send_response(result.acknowledged)
 
 

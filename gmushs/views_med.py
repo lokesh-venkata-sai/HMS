@@ -58,13 +58,15 @@ def update_medicine(request):
 @api_view(['POST', 'PUT'])
 def issue_medicine(request):
     medicine_data = request.data
-    quantity = medicine_collection.find_one({"med_id": medicine_data['med_id']})
-    if not medicine_data['quantity'] <= quantity["quantity"]:
-        return HttpResponse(get_response("No Stock: Change the quantity"))
-    result = medicines_issued_temp_collection.insert_one(medicine_data)
-    if result.acknowledged:
-        medicine_collection.update_one({"med_id": medicine_data['med_id']},
-                                       {"$set": {"quantity": quantity["quantity"] - medicine_data['quantity']}})
+    result = True
+    for m in medicine_data:
+        quantity = medicine_collection.find_one({"med_id": m['med_id']})
+        if not m['quantity'] <= quantity["quantity"]:
+            return HttpResponse(get_response("No Stock: Change the quantity"))
+        result = result and medicines_issued_temp_collection.insert_one(m)
+        if result.acknowledged:
+            medicine_collection.update_one({"med_id": m['med_id']},
+                                           {"$set": {"quantity": quantity["quantity"] - m['quantity']}})
     return send_response(result.acknowledged)
 
 
