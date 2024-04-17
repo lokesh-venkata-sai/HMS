@@ -136,8 +136,12 @@ def delete_room(request, room_type):
 @api_view(['GET'])
 def get_all_patient_details(request, p_id):
     patient_data = patient_collection.find_one({"p_id": p_id}, {"_id": 0})
-    diagnostics_data = diagnostics_ordered_temp_collection.find({"p_id": p_id}, {"_id": 0})
-    medicines_data = medicines_issued_temp_collection.find({"p_id": p_id}, {"_id": 0})
+    if patient_data["status"] == 'active':
+        diagnostics_data = diagnostics_ordered_temp_collection.find({"p_id": p_id}, {"_id": 0})
+        medicines_data = medicines_issued_temp_collection.find({"p_id": p_id}, {"_id": 0})
+    else:
+        diagnostics_data = diagnostics_ordered_collection.find({"p_id": p_id}, {"_id": 0})
+        medicines_data = medicines_issued_collection.find({"p_id": p_id}, {"_id": 0})
     doc_id = patient_doctor_collection.find_one({"p_id": p_id}, {"_id": 0, 'doc_id': 1})["doc_id"]
     doctor_info = doctors_collection.find_one({"doc_id": doc_id}, {"_id": 0})
 
