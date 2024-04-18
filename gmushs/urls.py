@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views, views_doc, views_med, views_diag, views_billing
+from . import views, views_doc, views_med, views_diag, views_billing, views_queries
 
 # URL Configuration
 urlpatterns = [
@@ -45,5 +45,9 @@ urlpatterns = [
 
     path('calculate_bill/<str:p_id>', views_billing.calculate_bill),
     path('get_bill/<str:p_id>', views_billing.get_bill),
-    path('make_payment/<str:p_id>', views_billing.make_payment)
+    path('make_payment/<str:p_id>', views_billing.make_payment),
+
+    path('get_bed_statistics', views_queries.get_beds_statistics),
+    path('get_status_statistics', views_queries.get_status_statistics),
+    path('get_medicine_statistics', views_queries.get_medicine_statistics)
 ]
