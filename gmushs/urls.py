@@ -49,5 +49,7 @@ urlpatterns = [
 
     path('get_bed_statistics', views_queries.get_beds_statistics),
     path('get_status_statistics', views_queries.get_status_statistics),
-    path('get_medicine_statistics', views_queries.get_medicine_statistics)
+    path('get_medicine_statistics', views_queries.get_medicine_statistics),
+    path('search', views_queries.search),
+    path('get_timely_stat', views_queries.get_timely_stat)
 ]

@@ -40,3 +40,58 @@ def get_medicine_statistics(request):
     df = pd.DataFrame(m_list)
     res = df.groupby('med_id')['quantity'].sum().to_dict()
     return HttpResponse(json.dumps(res))
+
+
+@api_view(['GET'])
+def search(request):
+    name = request.data["name"]
+    patient_data = patient_collection.find({"p_name": {"$regex": ".*" + name + ".*", "$options": "i"}}, {"_id": 0})
+    doctor_info = doctors_collection.find({"doc_name": {"$regex": ".*" + name + ".*", "$options": "i"}}, {"_id": 0})
+
+    patients_list = []
+    for p in patient_data:
+        doctor_map = patient_doctor_collection.find_one({"p_id": p["p_id"]}, {"_id": 0})
+        if doctor_map:
+            p["doc_id"] = doctor_map["doc_id"]
+        else:
+            p["doc_id"] = "None"
+        patients_list.append(p)
+
+    doctors_list = []
+    for d in doctor_info:
+        doctors_list.append(d)
+
+    result = {
+        "patient_info": patients_list,
+        "doctor_info": doctors_list
+    }
+
+    return HttpResponse(json.dumps(result))
+
+
+@api_view(['GET'])
+def get_timely_stat(request):
+    type_time = request.data["type"]
+    patient_data = patient_collection.find({}, {"_id": 0})
+    patients_list = []
+    for p in patient_data:
+        patients_list.append(p)
+
+    df = pd.DataFrame(patients_list)
+    df['doj'] = pd.to_datetime(df['doj'])
+    df['year'] = df['doj'].dt.year
+    df['month'] = df['doj'].dt.month
+    result = {}
+    if type_time == "monthly":
+        year = request.data["year"]
+        filtered_df = df[(df['year'] == year)]
+        patients_count_monthly = filtered_df.groupby('month').size()
+        result = patients_count_monthly.to_dict()
+    elif type_time == "yearly":
+        start_year = request.data["startYear"]
+        end_year = request.data["endYear"]
+        filtered_df = df[(df['year'] >= start_year) & (df['year'] <= end_year)]
+        patients_count_yearly = filtered_df.groupby('year').size()
+        result = patients_count_yearly.to_dict()
+
+    return HttpResponse(json.dumps(result))
