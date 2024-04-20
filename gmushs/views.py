@@ -48,13 +48,14 @@ def update_patient(request):
     doctor_assigned = patient_collection.find_one({"p_id": patient_id},
                                                   {"_id": 0, "doctor_assigned": 1})["doctor_assigned"]
     del patient_data["doc_id"]
+    doc_changed = False
     if doctor_id == 'None':
         patient_data["doctor_assigned"] = False
         patient_doctor_collection.delete_one({"p_id": patient_id})
     else:
         # print("In updating doctor ID")
         if doctor_assigned:
-            patient_doctor_collection.update_one({"p_id": patient_id}, {"$set": {"doc_id": doctor_id}})
+            doc_changed = patient_doctor_collection.update_one({"p_id": patient_id}, {"$set": {"doc_id": doctor_id}})
         else:
             patient_data["doctor_assigned"] = True
             patient_doctor_collection.insert_one({"p_id": patient_id, "doc_id": doctor_id})
@@ -63,10 +64,10 @@ def update_patient(request):
     result = patient_collection.update_one({"p_id": patient_id}, {"$set": patient_data})
 
     # Check if the update was successful
-    if result.modified_count == 1:
+    if (result.modified_count == 1) or (doc_changed.modified_count == 1):
         return HttpResponse(get_response("Patient updated successfully."))
     else:
-        return HttpResponse(get_response("Failed to update patient."), status=500)
+        return HttpResponse(get_response("Failed to update patient."))
 
 
 @api_view(['GET', 'POST'])
@@ -142,22 +143,27 @@ def get_all_patient_details(request, p_id):
     else:
         diagnostics_data = diagnostics_ordered_collection.find({"p_id": p_id}, {"_id": 0})
         medicines_data = medicines_issued_collection.find({"p_id": p_id}, {"_id": 0})
-    doc_id = patient_doctor_collection.find_one({"p_id": p_id}, {"_id": 0, 'doc_id': 1})["doc_id"]
-    doctor_info = doctors_collection.find_one({"doc_id": doc_id}, {"_id": 0})
+    doc_id_info = patient_doctor_collection.find_one({"p_id": p_id}, {"_id": 0, 'doc_id': 1})
+    doctor_info = {}
+    if doc_id_info:
+        doc_id = doc_id_info["doc_id"]
+        doctor_info = doctors_collection.find_one({"doc_id": doc_id}, {"_id": 0})
 
     diagnostics_list = []
     for d in diagnostics_data:
         diagnostic = diagnostics_collection.find_one({"d_id": d["d_id"]}, {"_id": 0})
-        diagnostics_list.append({"d_id": d["d_id"],
-                                 "d_name": diagnostic["d_name"],
-                                 "date_issued": d["date_issued"]})
+        if diagnostic:
+            diagnostics_list.append({"d_id": d["d_id"],
+                                     "d_name": diagnostic["d_name"],
+                                     "date_issued": d["date_issued"]})
     medicines_list = []
     for m in medicines_data:
         medicine = medicine_collection.find_one({"med_id": m["med_id"]}, {"_id": 0})
-        medicines_list.append({"med_id": m["med_id"],
-                               "m_name": medicine["med_name"],
-                               "quantity": m["quantity"],
-                               "date_issued": m["date_issued"]})
+        if medicine:
+            medicines_list.append({"med_id": m["med_id"],
+                                   "m_name": medicine["med_name"],
+                                   "quantity": m["quantity"],
+                                   "date_issued": m["date_issued"]})
 
     result = {
         "patient_info": patient_data,

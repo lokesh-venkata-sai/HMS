@@ -69,8 +69,11 @@ def make_payment(request, p_id):
     for d in d_temp:
         d_list.append(d)
 
-    res = medicines_issued_collection.insert_many(m_list).acknowledged
-    res = res and diagnostics_ordered_collection.insert_many(d_list).acknowledged
+    res = True
+    if m_list:
+        res = medicines_issued_collection.insert_many(m_list).acknowledged
+    if d_list:
+        res = res and diagnostics_ordered_collection.insert_many(d_list).acknowledged
 
     if res:
         medicines_issued_temp_collection.delete_many({"p_id": p_id})

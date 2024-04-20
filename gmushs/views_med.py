@@ -21,8 +21,8 @@ def delete_medicines(request, med_id):
     if request.method == 'DELETE':
         result = medicine_collection.delete_one({"med_id": med_id})
         if result.deleted_count == 1:
+            medicines_issued_temp_collection.delete_many({"med_id": med_id})
             return HttpResponse(get_response(True))
-            # todo: Check if we need to delete associated medicine issued temp records if medicine gets deleted
         else:
             return HttpResponse(get_response(False))
     else:

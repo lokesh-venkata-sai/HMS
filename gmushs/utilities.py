@@ -46,4 +46,4 @@ def send_response(result):
     if result:
         return HttpResponse(get_response(True))
     else:
-        return HttpResponse(get_response(False), status=500)
+        return HttpResponse(get_response(False))

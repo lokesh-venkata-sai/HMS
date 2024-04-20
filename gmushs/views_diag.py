@@ -20,8 +20,8 @@ def delete_diagnostics(request, d_id):
     if request.method == 'DELETE':
         result = diagnostics_collection.delete_one({"d_id": d_id})
         if result.deleted_count == 1:
+            diagnostics_ordered_temp_collection.delete_many({"d_id": d_id})
             return HttpResponse(get_response(True))
-            # todo: Check if we need to delete associated diagnostics issued temp records if diagnostic gets deleted
         else:
             return HttpResponse(get_response(False))
     else:
@@ -49,7 +49,6 @@ def update_diagnostic(request):
 
     # Update doctor data in the database
     result = diagnostics_collection.update_one({"d_id": d_id}, {"$set": diagnostic_data})
-
     # Check if the update was successful
     return send_response(result.modified_count == 1)
 

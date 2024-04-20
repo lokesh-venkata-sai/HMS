@@ -44,7 +44,7 @@ def get_medicine_statistics(request):
 
 @api_view(['GET'])
 def search(request):
-    name = request.data["name"]
+    name = request.GET.get('query', '')
     patient_data = patient_collection.find({"p_name": {"$regex": ".*" + name + ".*", "$options": "i"}}, {"_id": 0})
     doctor_info = doctors_collection.find({"doc_name": {"$regex": ".*" + name + ".*", "$options": "i"}}, {"_id": 0})
 
@@ -71,7 +71,7 @@ def search(request):
 
 @api_view(['GET'])
 def get_timely_stat(request):
-    type_time = request.data["type"]
+    type_time = request.GET.get('type', '')
     patient_data = patient_collection.find({}, {"_id": 0})
     patients_list = []
     for p in patient_data:
@@ -82,15 +82,15 @@ def get_timely_stat(request):
     df['year'] = df['doj'].dt.year
     df['month'] = df['doj'].dt.month
     result = {}
-    if type_time == "monthly":
-        year = request.data["year"]
-        filtered_df = df[(df['year'] == year)]
+    if type_time == "MONTHLY":
+        year = request.GET.get('year', '')
+        filtered_df = df[(df['year'] == int(year))]
         patients_count_monthly = filtered_df.groupby('month').size()
         result = patients_count_monthly.to_dict()
-    elif type_time == "yearly":
-        start_year = request.data["startYear"]
-        end_year = request.data["endYear"]
-        filtered_df = df[(df['year'] >= start_year) & (df['year'] <= end_year)]
+    elif type_time == "YEARLY":
+        start_year = request.GET.get('startYear', '')
+        end_year = request.GET.get('endYear', '')
+        filtered_df = df[(df['year'] >= int(start_year)) & (df['year'] <= int(end_year))]
         patients_count_yearly = filtered_df.groupby('year').size()
         result = patients_count_yearly.to_dict()
 
