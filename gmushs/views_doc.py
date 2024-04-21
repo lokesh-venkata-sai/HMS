@@ -72,15 +72,79 @@ def update_doctor(request):
 
 
 @api_view(['GET'])
+# def get_doctor_by_patient(request, p_id):
+#     patient = patient_collection.find_one({"p_id": p_id}, {"_id": 0})
+#     doctor_map = patient_doctor_collection.find_one({"p_id": p_id}, {"_id": 0})
+#
+#     if doctor_map:
+#         patient["doc_id"] = doctor_map["doc_id"]
+#     else:
+#         patient["doc_id"] = "None"
+#
+#     doctor = doctors_collection.find_one({"doc_id": patient["doc_id"]}, {"_id": 0})
+#     res = {"patient_info": patient, "doctor_info": doctor}
+#     return HttpResponse(json.dumps(res))
 def get_doctor_by_patient(request, p_id):
-    patient = patient_collection.find_one({"p_id": p_id}, {"_id": 0})
-    doctor_map = patient_doctor_collection.find_one({"p_id": p_id}, {"_id": 0})
-
-    if doctor_map:
-        patient["doc_id"] = doctor_map["doc_id"]
-    else:
-        patient["doc_id"] = "None"
-
-    doctor = doctors_collection.find_one({"doc_id": patient["doc_id"]}, {"_id": 0})
-    res = {"patient_info": patient, "doctor_info": doctor}
-    return HttpResponse(json.dumps(res))
+    pipeline = [
+        {
+            "$match": {
+                "p_id": p_id
+            }
+        },
+        {
+            "$lookup": {
+                "from": "patient_doctor",
+                "localField": "p_id",
+                "foreignField": "p_id",
+                "as": "patient_doctor_info"
+            }
+        },
+        {
+            "$unwind": "$patient_doctor_info"
+        },
+        {
+            "$lookup": {
+                "from": "doctor",
+                "localField": "patient_doctor_info.doc_id",
+                "foreignField": "doc_id",
+                "as": "doctor_info"
+            }
+        },
+        {
+            "$unwind": "$doctor_info"
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "doctor_details": {
+                    "doc_name": "$doctor_info.doc_name",
+                    "specialization": "$doctor_info.specialization",
+                    "email": "$doctor_info.email",
+                    "mobile": "$doctor_info.mobile",
+                    "address": "$doctor_info.address",
+                    "city": "$doctor_info.city",
+                    "state": "$doctor_info.state"
+                },
+                "patient_details": {
+                    "p_name": "$p_name",
+                    "p_age": "$p_age",
+                    "p_mobile": "$p_mobile",
+                    "p_email": "$p_email",
+                    "address": "$address",
+                    "doj": "$doj",
+                    "bedtype": "$bedtype",
+                    "city": "$city",
+                    "state": "$state",
+                    "doctor_assigned": "$doctor_assigned",
+                    "status": "$status"
+                },
+            }
+        }
+    ]
+    res = patient_collection.aggregate(pipeline)
+    d_list = []
+    patient = {}
+    for doctor in res:
+        d_list.append(doctor["doctor_details"])
+        patient = doctor["patient_details"]
+    return HttpResponse(json.dumps({"patient_info": patient, "doctor_info": d_list[0]}))

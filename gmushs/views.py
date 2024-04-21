@@ -135,53 +135,253 @@ def delete_room(request, room_type):
 
 
 @api_view(['GET'])
+# def get_all_patient_details(request, p_id):
+#     patient_data = patient_collection.find_one({"p_id": p_id}, {"_id": 0})
+#     if patient_data["status"] == 'active':
+#         diagnostics_data = diagnostics_ordered_temp_collection.find({"p_id": p_id}, {"_id": 0})
+#         medicines_data = medicines_issued_temp_collection.find({"p_id": p_id}, {"_id": 0})
+#     else:
+#         diagnostics_data = diagnostics_ordered_collection.find({"p_id": p_id}, {"_id": 0})
+#         medicines_data = medicines_issued_collection.find({"p_id": p_id}, {"_id": 0})
+#     doc_id_info = patient_doctor_collection.find_one({"p_id": p_id}, {"_id": 0, 'doc_id': 1})
+#     doctor_info = {}
+#     if doc_id_info:
+#         doc_id = doc_id_info["doc_id"]
+#         doctor_info = doctors_collection.find_one({"doc_id": doc_id}, {"_id": 0})
+#
+#     diagnostics_list = []
+#     for d in diagnostics_data:
+#         diagnostic = diagnostics_collection.find_one({"d_id": d["d_id"]}, {"_id": 0})
+#         if diagnostic:
+#             diagnostics_list.append({"d_id": d["d_id"],
+#                                      "d_name": diagnostic["d_name"],
+#                                      "date_issued": d["date_issued"]})
+#     medicines_list = []
+#     for m in medicines_data:
+#         medicine = medicine_collection.find_one({"med_id": m["med_id"]}, {"_id": 0})
+#         if medicine:
+#             medicines_list.append({"med_id": m["med_id"],
+#                                    "m_name": medicine["med_name"],
+#                                    "quantity": m["quantity"],
+#                                    "date_issued": m["date_issued"]})
+#
+#     result = {
+#         "patient_info": patient_data,
+#         "diagnostics_info": diagnostics_list,
+#         "medicines_info": medicines_list,
+#         "doctor_info": doctor_info
+#     }
+#     return HttpResponse(json.dumps(result))
 def get_all_patient_details(request, p_id):
-    patient_data = patient_collection.find_one({"p_id": p_id}, {"_id": 0})
-    if patient_data["status"] == 'active':
-        diagnostics_data = diagnostics_ordered_temp_collection.find({"p_id": p_id}, {"_id": 0})
-        medicines_data = medicines_issued_temp_collection.find({"p_id": p_id}, {"_id": 0})
-    else:
-        diagnostics_data = diagnostics_ordered_collection.find({"p_id": p_id}, {"_id": 0})
-        medicines_data = medicines_issued_collection.find({"p_id": p_id}, {"_id": 0})
-    doc_id_info = patient_doctor_collection.find_one({"p_id": p_id}, {"_id": 0, 'doc_id': 1})
-    doctor_info = {}
-    if doc_id_info:
-        doc_id = doc_id_info["doc_id"]
-        doctor_info = doctors_collection.find_one({"doc_id": doc_id}, {"_id": 0})
+    pipeline = [
+        {
+            "$match": {
+                "p_id": p_id
+            }
+        },
+        {
+            "$lookup": {
+                "from": "medicines_issued_temp",
+                "localField": "p_id",
+                "foreignField": "p_id",
+                "as": "medicines_issued"
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$medicines_issued",
+                "preserveNullAndEmptyArrays": True
+            }
+        },
+        {
+            "$lookup": {
+                "from": "medicine",
+                "localField": "medicines_issued.med_id",
+                "foreignField": "med_id",
+                "as": "medicine_info"
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$medicine_info",
+                "preserveNullAndEmptyArrays": True
+            }
+        },
+        {
+            "$lookup": {
+                "from": "diagnostics_ordered_temp",
+                "localField": "p_id",
+                "foreignField": "p_id",
+                "as": "diagnostics_ordered"
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$diagnostics_ordered",
+                "preserveNullAndEmptyArrays": True
+            }
+        },
+        {
+            "$lookup": {
+                "from": "diagnostics",
+                "localField": "diagnostics_ordered.d_id",
+                "foreignField": "d_id",
+                "as": "diagnostics_info"
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$diagnostics_info",
+                "preserveNullAndEmptyArrays": True
+            }
+        },
+        {
+            "$lookup": {
+                "from": "patient_doctor",
+                "localField": "p_id",
+                "foreignField": "p_id",
+                "as": "patient_doctor_info"
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$patient_doctor_info",
+                "preserveNullAndEmptyArrays": True
+            }
+        },
+        {
+            "$lookup": {
+                "from": "doctor",
+                "localField": "patient_doctor_info.doc_id",
+                "foreignField": "doc_id",
+                "as": "doctor_info"
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$doctor_info",
+                "preserveNullAndEmptyArrays": True
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "patient_details": {
+                    "p_name": "$p_name",
+                    "p_age": "$p_age",
+                    "p_mobile": "$p_mobile",
+                    "p_email": "$p_email",
+                    "address": "$address",
+                    "doj": "$doj",
+                    "bedtype": "$bedtype",
+                    "city": "$city",
+                    "state": "$state",
+                    "doctor_assigned": "$doctor_assigned",
+                    "status": "$status"
+                },
+                "medicine_details": {
+                    "med_id": "$medicine_info.med_id",
+                    "med_name": "$medicine_info.med_name",
+                    "quantity_issued": "$medicines_issued.quantity",
+                    "date_issued": "$medicines_issued.date_issued"
+                },
+                "diagnostics_details": {
+                    "d_id": "$diagnostics_info.d_id",
+                    "diagnostic_name": "$diagnostics_info.diagnostic_name",
+                    "date_issued": "$diagnostics_ordered.date_issued"
+                },
+                "doctor_details": {
+                    "doc_id": "$doctor_info.doc_id",
+                    "doc_name": "$doctor_info.doc_name",
+                    "specialization": "$doctor_info.specialization",
+                    "email": "$doctor_info.email",
+                    "mobile": "$doctor_info.mobile",
+                    "address": "$doctor_info.address",
+                    "city": "$doctor_info.city",
+                    "state": "$doctor_info.state"
+                }
+            }
+        }
+    ]
+    res = patient_collection.aggregate(pipeline)
 
-    diagnostics_list = []
-    for d in diagnostics_data:
-        diagnostic = diagnostics_collection.find_one({"d_id": d["d_id"]}, {"_id": 0})
-        if diagnostic:
-            diagnostics_list.append({"d_id": d["d_id"],
-                                     "d_name": diagnostic["d_name"],
-                                     "date_issued": d["date_issued"]})
-    medicines_list = []
-    for m in medicines_data:
-        medicine = medicine_collection.find_one({"med_id": m["med_id"]}, {"_id": 0})
-        if medicine:
-            medicines_list.append({"med_id": m["med_id"],
-                                   "m_name": medicine["med_name"],
-                                   "quantity": m["quantity"],
-                                   "date_issued": m["date_issued"]})
+    temp = {}
+    for patient in res:
+        temp = patient
 
-    result = {
-        "patient_info": patient_data,
-        "diagnostics_info": diagnostics_list,
-        "medicines_info": medicines_list,
-        "doctor_info": doctor_info
-    }
+    result = {}
+    if temp:
+        result = {
+            "patient_info": temp["patient_details"],
+            "diagnostics_info": temp["diagnostics_details"],
+            "medicines_info": temp["medicine_details"],
+            "doctor_info": temp["doctor_details"]
+        }
     return HttpResponse(json.dumps(result))
 
 
 @api_view(['GET'])
+# def get_patients_by_doctor(request, doc_id):
+#     patients = patient_doctor_collection.find({'doc_id': doc_id}, {"_id": 0, "p_id": 1})
+#     doctor = doctors_collection.find_one({"doc_id": doc_id}, {"_id": 0})
+#
+#     p_list = []
+#     for p in patients:
+#         p_list.append(patient_collection.find_one({"p_id": p["p_id"]}, {"_id": 0}))
+#
+#     res = {"doctor_info": doctor, "patient_info": p_list}
+#     return HttpResponse(json.dumps(res))
 def get_patients_by_doctor(request, doc_id):
-    patients = patient_doctor_collection.find({'doc_id': doc_id}, {"_id": 0, "p_id": 1})
     doctor = doctors_collection.find_one({"doc_id": doc_id}, {"_id": 0})
-
+    pipeline = [
+        {
+            "$lookup": {
+                "from": "patient_doctor",
+                "localField": "p_id",
+                "foreignField": "p_id",
+                "as": "patient_doctor_info"
+            }
+        },
+        {
+            "$unwind": "$patient_doctor_info"
+        },
+        {
+            "$match": {
+                "patient_doctor_info.doc_id": doc_id
+            }
+        },
+        {
+            "$lookup": {
+                "from": "doctor",
+                "localField": "patient_doctor_info.doc_id",
+                "foreignField": "doc_id",
+                "as": "doctor_info"
+            }
+        },
+        {
+            "$unwind": "$doctor_info"
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "patient_details": {
+                    "p_name": "$p_name",
+                    "p_age": "$p_age",
+                    "p_mobile": "$p_mobile",
+                    "p_email": "$p_email",
+                    "address": "$address",
+                    "doj": "$doj",
+                    "bedtype": "$bedtype",
+                    "city": "$city",
+                    "state": "$state",
+                    "doctor_assigned": "$doctor_assigned",
+                    "status": "$status"
+                }
+            }
+        }
+    ]
+    res = patient_collection.aggregate(pipeline)
     p_list = []
-    for p in patients:
-        p_list.append(patient_collection.find_one({"p_id": p["p_id"]}, {"_id": 0}))
-
-    res = {"doctor_info": doctor, "patient_info": p_list}
-    return HttpResponse(json.dumps(res))
+    for patient in res:
+        p_list.append(patient["patient_details"])
+    return HttpResponse(json.dumps({"doctor_info": doctor, "patient_info": p_list}))

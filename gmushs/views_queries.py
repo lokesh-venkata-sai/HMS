@@ -43,23 +43,71 @@ def get_medicine_statistics(request):
 
 
 @api_view(['GET'])
+# def search(request):
+#     name = request.GET.get('query', '')
+#     patient_data = patient_collection.find({"p_name": {"$regex": ".*" + name + ".*", "$options": "i"}}, {"_id": 0})
+#     doctor_info = doctors_collection.find({"doc_name": {"$regex": ".*" + name + ".*", "$options": "i"}}, {"_id": 0})
+#
+#     patients_list = []
+#     for p in patient_data:
+#         doctor_map = patient_doctor_collection.find_one({"p_id": p["p_id"]}, {"_id": 0})
+#         if doctor_map:
+#             p["doc_id"] = doctor_map["doc_id"]
+#         else:
+#             p["doc_id"] = "None"
+#         patients_list.append(p)
+#
+#     doctors_list = []
+#     for d in doctor_info:
+#         doctors_list.append(d)
+#
+#     result = {
+#         "patient_info": patients_list,
+#         "doctor_info": doctors_list
+#     }
+#
+#     return HttpResponse(json.dumps(result))
 def search(request):
     name = request.GET.get('query', '')
-    patient_data = patient_collection.find({"p_name": {"$regex": ".*" + name + ".*", "$options": "i"}}, {"_id": 0})
-    doctor_info = doctors_collection.find({"doc_name": {"$regex": ".*" + name + ".*", "$options": "i"}}, {"_id": 0})
+    pipeline = [
+        {
+            "$facet": {
+                "patients": [
+                    {"$match": {"p_name": {"$regex": ".*" + name + ".*", "$options": "i"}}},
+                    {"$lookup": {
+                        "from": "patient_doctor",
+                        "localField": "p_id",
+                        "foreignField": "p_id",
+                        "as": "doctor_map"
+                    }},
+                    {"$project": {
+                        "_id": 0,
+                        "p_id": 1,
+                        "p_name": 1,
+                        "p_age": 1,
+                        "p_mobile": 1,
+                        "p_email": 1,
+                        "address": 1,
+                        "doj": 1,
+                        "bedtype": 1,
+                        "city": 1,
+                        "state": 1,
+                        "doctor_assigned": 1,
+                        "status": 1,
+                        "doctor_info": {"$arrayElemAt": ["$doctor_map.doc_id", 0]}
+                    }}
+                ],
+                "doctors": [
+                    {"$match": {"doc_name": {"$regex": ".*" + name + ".*", "$options": "i"}}},
+                    {"$project": {"_id": 0}}
+                ]
+            }
+        }
+    ]
+    search_results = list(patient_collection.aggregate(pipeline)), list(db.doctor.aggregate(pipeline))
 
-    patients_list = []
-    for p in patient_data:
-        doctor_map = patient_doctor_collection.find_one({"p_id": p["p_id"]}, {"_id": 0})
-        if doctor_map:
-            p["doc_id"] = doctor_map["doc_id"]
-        else:
-            p["doc_id"] = "None"
-        patients_list.append(p)
-
-    doctors_list = []
-    for d in doctor_info:
-        doctors_list.append(d)
+    patients_list = search_results[0][0]["patients"]
+    doctors_list = search_results[1][0]["doctors"]
 
     result = {
         "patient_info": patients_list,
