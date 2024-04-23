@@ -126,6 +126,7 @@ def get_doctor_by_patient(request, p_id):
                     "state": "$doctor_info.state"
                 },
                 "patient_details": {
+                    "p_id": "$p_id",
                     "p_name": "$p_name",
                     "p_age": "$p_age",
                     "p_mobile": "$p_mobile",

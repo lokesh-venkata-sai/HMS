@@ -211,6 +211,7 @@ def get_all_patient_details(request, p_id):
             "$project": {
                 "_id": 0,
                 "patient_details": {
+                    "p_id": "$p_id",
                     "p_name": "$p_name",
                     "p_age": "$p_age",
                     "p_mobile": "$p_mobile",
@@ -226,7 +227,7 @@ def get_all_patient_details(request, p_id):
                 "medicine_details": {
                     "med_id": "$medicine_info.med_id",
                     "med_name": "$medicine_info.med_name",
-                    "quantity_issued": "$medicines_issued.quantity",
+                    "quantity": "$medicines_issued.quantity",
                     "date_issued": "$medicines_issued.date_issued"
                 }
             }
@@ -298,6 +299,7 @@ def get_all_patient_details(request, p_id):
             "$project": {
                 "_id": 0,
                 "patient_details": {
+                    "p_id": "$p_id",
                     "p_name": "$p_name",
                     "p_age": "$p_age",
                     "p_mobile": "$p_mobile",
@@ -401,6 +403,7 @@ def get_patients_by_doctor(request, doc_id):
             "$project": {
                 "_id": 0,
                 "patient_details": {
+                    "p_id": "$p_id",
                     "p_name": "$p_name",
                     "p_age": "$p_age",
                     "p_mobile": "$p_mobile",
