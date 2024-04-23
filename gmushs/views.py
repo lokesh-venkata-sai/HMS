@@ -173,7 +173,7 @@ def delete_room(request, room_type):
 #     }
 #     return HttpResponse(json.dumps(result))
 def get_all_patient_details(request, p_id):
-    pipeline = [
+    medicines_pipeline = [
         {
             "$match": {
                 "p_id": p_id
@@ -205,6 +205,37 @@ def get_all_patient_details(request, p_id):
             "$unwind": {
                 "path": "$medicine_info",
                 "preserveNullAndEmptyArrays": True
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "patient_details": {
+                    "p_name": "$p_name",
+                    "p_age": "$p_age",
+                    "p_mobile": "$p_mobile",
+                    "p_email": "$p_email",
+                    "address": "$address",
+                    "doj": "$doj",
+                    "bedtype": "$bedtype",
+                    "city": "$city",
+                    "state": "$state",
+                    "doctor_assigned": "$doctor_assigned",
+                    "status": "$status"
+                },
+                "medicine_details": {
+                    "med_id": "$medicine_info.med_id",
+                    "med_name": "$medicine_info.med_name",
+                    "quantity_issued": "$medicines_issued.quantity",
+                    "date_issued": "$medicines_issued.date_issued"
+                }
+            }
+        }
+    ]
+    diagnostics_pipeline = [
+        {
+            "$match": {
+                "p_id": p_id
             }
         },
         {
@@ -279,17 +310,12 @@ def get_all_patient_details(request, p_id):
                     "doctor_assigned": "$doctor_assigned",
                     "status": "$status"
                 },
-                "medicine_details": {
-                    "med_id": "$medicine_info.med_id",
-                    "med_name": "$medicine_info.med_name",
-                    "quantity_issued": "$medicines_issued.quantity",
-                    "date_issued": "$medicines_issued.date_issued"
-                },
                 "diagnostics_details": {
                     "d_id": "$diagnostics_info.d_id",
-                    "diagnostic_name": "$diagnostics_info.diagnostic_name",
+                    "d_name": "$diagnostics_info.d_name",
                     "date_issued": "$diagnostics_ordered.date_issued"
                 },
+
                 "doctor_details": {
                     "doc_id": "$doctor_info.doc_id",
                     "doc_name": "$doctor_info.doc_name",
@@ -303,19 +329,29 @@ def get_all_patient_details(request, p_id):
             }
         }
     ]
-    res = patient_collection.aggregate(pipeline)
 
-    temp = {}
-    for patient in res:
-        temp = patient
+    res1 = patient_collection.aggregate(medicines_pipeline)
+    res2 = patient_collection.aggregate(diagnostics_pipeline)
+
+    temp1 = {}
+    temp2 = {}
+    list1 = []
+    list2 = []
+    for patient in res1:
+        temp1 = patient["patient_details"]
+        list1.append(patient["medicine_details"])
+
+    for patient in res2:
+        temp2 = patient["doctor_details"]
+        list2.append(patient["diagnostics_details"])
 
     result = {}
-    if temp:
+    if temp1 and temp2:
         result = {
-            "patient_info": temp["patient_details"],
-            "diagnostics_info": temp["diagnostics_details"],
-            "medicines_info": temp["medicine_details"],
-            "doctor_info": temp["doctor_details"]
+            "patient_info": temp1,
+            "diagnostics_info": list2,
+            "medicines_info": list1,
+            "doctor_info": temp2
         }
     return HttpResponse(json.dumps(result))
 
