@@ -173,6 +173,13 @@ def delete_room(request, room_type):
 #     }
 #     return HttpResponse(json.dumps(result))
 def get_all_patient_details(request, p_id):
+    patient_data = db.patient.find_one({"p_id": p_id}, {"_id": 0})
+    diagnostics_table = "diagnostics_ordered_temp"
+    medicines_table = "medicines_issued_temp"
+    if patient_data["status"] == "discharged":
+        diagnostics_table = "diagnostics_ordered"
+        medicines_table = "medicines_issued"
+
     medicines_pipeline = [
         {
             "$match": {
@@ -181,22 +188,22 @@ def get_all_patient_details(request, p_id):
         },
         {
             "$lookup": {
-                "from": "medicines_issued_temp",
+                "from": medicines_table,
                 "localField": "p_id",
                 "foreignField": "p_id",
-                "as": "medicines_issued"
+                "as": "medicines_issued1"
             }
         },
         {
             "$unwind": {
-                "path": "$medicines_issued",
+                "path": "$medicines_issued1",
                 "preserveNullAndEmptyArrays": True
             }
         },
         {
             "$lookup": {
                 "from": "medicine",
-                "localField": "medicines_issued.med_id",
+                "localField": "medicines_issued1.med_id",
                 "foreignField": "med_id",
                 "as": "medicine_info"
             }
@@ -227,8 +234,8 @@ def get_all_patient_details(request, p_id):
                 "medicine_details": {
                     "med_id": "$medicine_info.med_id",
                     "med_name": "$medicine_info.med_name",
-                    "quantity": "$medicines_issued.quantity",
-                    "date_issued": "$medicines_issued.date_issued"
+                    "quantity": "$medicines_issued1.quantity",
+                    "date_issued": "$medicines_issued1.date_issued"
                 }
             }
         }
@@ -241,7 +248,7 @@ def get_all_patient_details(request, p_id):
         },
         {
             "$lookup": {
-                "from": "diagnostics_ordered_temp",
+                "from": diagnostics_table,
                 "localField": "p_id",
                 "foreignField": "p_id",
                 "as": "diagnostics_ordered"
@@ -339,16 +346,19 @@ def get_all_patient_details(request, p_id):
     temp2 = {}
     list1 = []
     list2 = []
+
     for patient in res1:
         temp1 = patient["patient_details"]
-        list1.append(patient["medicine_details"])
+        if patient["medicine_details"]:
+            list1.append(patient["medicine_details"])
 
     for patient in res2:
         temp2 = patient["doctor_details"]
-        list2.append(patient["diagnostics_details"])
+        if patient["diagnostics_details"]:
+            list2.append(patient["diagnostics_details"])
 
     result = {}
-    if temp1 and temp2:
+    if temp1 or temp2:
         result = {
             "patient_info": temp1,
             "diagnostics_info": list2,

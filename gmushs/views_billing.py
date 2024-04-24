@@ -114,6 +114,9 @@ def calculate_bill(request, p_id):
     # Calculate number of days
     no_of_days = (datetime.now() - datetime.strptime(patient_data["doj"], "%Y-%m-%d")).days
 
+    if no_of_days == 0:
+        no_of_days = 1
+
     # Calculate room price
     room_price *= no_of_days
 
