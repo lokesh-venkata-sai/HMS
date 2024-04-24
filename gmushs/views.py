@@ -81,8 +81,8 @@ def get_patients(request):
         else:
             p["doc_id"] = "None"
         patients_list.append(p)
-
-    return HttpResponse(json.dumps(patients_list))
+    sorted_list = sorted(patients_list, key=lambda x: x["status"])
+    return HttpResponse(json.dumps(sorted_list))
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
