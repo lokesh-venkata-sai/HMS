@@ -57,3 +57,14 @@ views is file name that contains the method
 
 Next, we need to configure URL path in main urls.py (present in project folder) (External app mappings)
 - ex: urlpatterns = [path('app_name/', include('app_name.urls')]
+
+### To connect Django with MongoDB
+- pip install pymongo
+- create db_connection.py file in main project folder
+  - configure database [see: db_connection.py file for example]
+- In models.py file of our app do the following
+  - from db_connection import db
+  - example_collection = db['example_collection']
+- Now we can use the collection variable by following the below steps in our views file
+  - from .models import example_collection
+  - now we are ready to use the collection variable
