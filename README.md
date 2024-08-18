@@ -1,70 +1,88 @@
 # Hospital Management System
 
-Frontend Code - https://github.com/Srisai27/HMS-front-end-angular
+Frontend Code - [HMS Front-end Angular](https://github.com/Srisai27/HMS-front-end-angular)
 
-### Introduction
-The Hospital management system is a comprehensive platform designed to streamline and 
-optimize healthcare operations, from patient care to administrative tasks. Built using Angular 
-for the frontend, Django for backend functionality, and MongoDB for data storage. It includes 
-features such as patient records management, inventory control, billing, and analytics, 
-empowering healthcare providers to deliver efficient, high-quality care while improving 
-overall organizational productivity and patient outcomes.
+## Introduction
+The Hospital Management System is a comprehensive platform designed to streamline and optimize healthcare operations, from patient care to administrative tasks. Built using Angular for the frontend, Django for backend functionality, and MongoDB for data storage, it includes features such as patient records management, inventory control, billing, and analytics. This system empowers healthcare providers to deliver efficient, high-quality care while improving overall organizational productivity and patient outcomes.
 
-### Technologies Used 
-1) Django
-2) MongoDB 
-3) RESTful Web Services
-- Frontend (Code in another repository mentioned above)
-1) Angular 
-2) Auth0 – Third Party Authentication Service
-3) Bootstrap 
-4) HTML 
-5) CSS 
+## Technologies Used
 
-### Sample UI:
+### Backend
+- Django
+- MongoDB
+- RESTful Web Services
 
-#### Home page
-![img_1.png](img_1.png)
+### Frontend
+- Angular 
+- Auth0 – Third Party Authentication Service
+- Bootstrap 
+- HTML 
+- CSS 
 
-#### Patient page
-![img.png](img.png)
+## Sample UI
 
+### Home Page
+![Home Page](img_1.png)
 
-### Instructions to work on a Django project in pycharm
-To create project
-- django-admin startproject project_name . 
-- "." at end tells to start project at current directory
+### Patient Page
+![Patient Page](img.png)
 
-To create an app in Django project
-- django-admin startapp app_name
+## Instructions to work on Django project in Pycharm
 
-To run app (two ways)
-1) python manage.py runserver (or)
-2) In run --> Edit config --> Add config 
-    - path: project_name/manage.py
-    - parameters: runserver
+1. **Create a Django Project**: 
+    - Use the command:
+    ```bash
+    django-admin startproject project_name .
+    ```
+    - The `.` at the end tells Django to start the project in the current directory.
+  
+2. **Create an App in the Django Project**:
+    - Use the command:
+    ```bash
+    django-admin startapp app_name
+    ```
 
-Everytime we create an app, needs to add it in "INSTALLED_APPS" variable
-in settings.py file
+3. **Run the Django App**: 
+    - You can run the app in two ways:
+      1. Using the command:
+         ```bash
+         python manage.py runserver
+         ```
+      2. By configuring PyCharm:
+         - Go to `Run` --> `Edit Configurations` --> `Add Configuration`
+         - Set the path to `project_name/manage.py`
+         - Set the parameters to `runserver`
 
-When Building APIs in Django, we don't need "sessions" app so we can delete
-it from settings.py file
+4. **Additional Configuration**:
+    - Every time you create an app, add it to the `INSTALLED_APPS` variable in the `settings.py` file.
+    - When building APIs in Django, you can remove the "sessions" app from the `settings.py` file if not needed.
 
-We need to map our urls to functions so that each url redirects to specific target (Internal app mappings)
-- So add "urls.py" file in app folder and configure
-- ex: urlpatterns = [path('hello', views.say_hello)] - here say_hello is method name and 
-views is file name that contains the method
+5. **URL Configuration**:
+    - To map URLs to functions so that each URL redirects to a specific target (internal app mappings), add a `urls.py` file in the app folder and configure it. Example:
+      ```python
+      urlpatterns = [path('hello', views.say_hello)]
+      ```
+      Here, `say_hello` is the method name and `views` is the file that contains the method.
 
-Next, we need to configure URL path in main urls.py (present in project folder) (External app mappings)
-- ex: urlpatterns = [path('app_name/', include('app_name.urls')]
+    - Next, configure the URL path in the main `urls.py` (present in the project folder) for external app mappings. Example:
+      ```python
+      urlpatterns = [path('app_name/', include('app_name.urls'))]
+      ```
 
-### To connect Django with MongoDB
-- pip install pymongo
-- create db_connection.py file in main project folder
-  - configure database [see: db_connection.py file for example]
-- In models.py file of our app do the following
-  - from db_connection import db
-  - example_collection = db['example_collection']
-- Now we can use the collection variable by following the below steps in our views file
-  - from .models import example_collection
-  - now we are ready to use the collection variable
+6. **Connecting Django with MongoDB**:
+    - Install `pymongo`:
+      ```bash
+      pip install pymongo
+      ```
+    - Create a `db_connection.py` file in the main project folder and configure the database (see `db_connection.py` for an example).
+
+    - In the `models.py` file of your app, do the following:
+      ```python
+      from db_connection import db
+      example_collection = db['example_collection']
+      ```
+    - You can now use the `example_collection` variable in your views file:
+      ```python
+      from .models import example_collection
+      ```
+    - Now you are ready to use the collection variable in your code.
